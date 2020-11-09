@@ -1,6 +1,7 @@
 package datacollect
 
 import (
+	"emuMolding/models"
 	"net/http"
 	"sync"
 )
@@ -11,6 +12,9 @@ var dcIP string
 var wiseFetchTimeMap sync.Map
 var fetchDcLockMap sync.Map
 var cycleMap sync.Map
+
+// Dcs Dcs
+var Dcs []models.Wise
 
 type cycleStep struct {
 	step1 timeWithSysTk

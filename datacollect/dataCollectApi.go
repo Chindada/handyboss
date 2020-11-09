@@ -5,21 +5,9 @@ import (
 	"emuMolding/models"
 	"encoding/json"
 	"io/ioutil"
-	"runtime"
-
-	"github.com/astaxie/beego"
 )
 
 func checkGetDcLog(dc models.Wise) (tst, tend int64, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	headers := make(map[string]string)
 	headers["Authorization"] = dc.Token
 	api := restapitools.GetArg{
@@ -30,18 +18,18 @@ func checkGetDcLog(dc models.Wise) (tst, tend int64, err error) {
 	}
 	resp, err := api.Get()
 	if err != nil {
-		panic(err)
+		return tst, tend, err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return tst, tend, err
 	}
 
 	var data models.DcGetLogBody
 	if err := json.Unmarshal(body, &data); err != nil {
-		panic(err)
+		return tst, tend, err
 	}
 	tst = data.TSt
 	tend = data.TEnd
@@ -49,15 +37,6 @@ func checkGetDcLog(dc models.Wise) (tst, tend int64, err error) {
 }
 
 func putDc(dc models.Wise) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	puBody := models.DcPutBody{
 		UID:  1,
 		MAC:  0,
@@ -75,7 +54,7 @@ func putDc(dc models.Wise) (err error) {
 	}
 	resp, err := api.Put()
 	if err != nil {
-		panic(err)
+		return err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -83,15 +62,6 @@ func putDc(dc models.Wise) (err error) {
 }
 
 func patchDc(dc models.Wise, timeRange models.DcPatchBody) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	headers := make(map[string]string)
 	headers["Authorization"] = dc.Token
 	api := restapitools.PatchArg{
@@ -103,7 +73,7 @@ func patchDc(dc models.Wise, timeRange models.DcPatchBody) (err error) {
 	}
 	resp, err := api.Patch()
 	if err != nil {
-		panic(err)
+		return err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -111,15 +81,6 @@ func patchDc(dc models.Wise, timeRange models.DcPatchBody) (err error) {
 }
 
 func getDcLog(dc models.Wise) (data models.DcGetLogBody, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	headers := make(map[string]string)
 	headers["Authorization"] = dc.Token
 	api := restapitools.GetArg{
@@ -136,24 +97,15 @@ func getDcLog(dc models.Wise) (data models.DcGetLogBody, err error) {
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return data, err
 	}
 	if err := json.Unmarshal(body, &data); err != nil {
-		panic(err)
+		return data, err
 	}
 	return data, err
 }
 
 func getDcData(dc models.Wise) (dis []models.Di, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	headers := make(map[string]string)
 	headers["Authorization"] = dc.Token
 	api := restapitools.GetArg{
@@ -170,15 +122,15 @@ func getDcData(dc models.Wise) (dis []models.Di, err error) {
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return dis, err
 	}
 	var data models.WiseData
 	if err := json.Unmarshal(body, &data); err != nil {
-		panic(err)
+		return dis, err
 	}
 	dis, err = data.ConvertToDi()
 	if err != nil {
-		panic(err)
+		return dis, err
 	}
 	return dis, err
 }

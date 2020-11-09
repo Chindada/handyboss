@@ -1,7 +1,7 @@
 package routers
 
 import (
-	machinecontroller "emuMolding/controllers/machineController"
+	"emuMolding/controllers/machinecontroller"
 
 	"github.com/astaxie/beego"
 )

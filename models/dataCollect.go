@@ -98,7 +98,7 @@ func (c *WiseData) ConvertToDi() (di []Di, err error) {
 	for _, v := range c.LogMsg {
 		timeStamp, err := strconv.Atoi(v.TIM)
 		if err != nil {
-			return nil, err
+			return di, err
 		}
 		tmp := Di{
 			Di0:        v.Record[0][3],

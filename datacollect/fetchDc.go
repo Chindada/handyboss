@@ -1,7 +1,7 @@
 package datacollect
 
 import (
-	dcstatusdao "emuMolding/daos/dcStatusDao"
+	"emuMolding/daos/dcstatusdao"
 	"emuMolding/daos/didao"
 	"emuMolding/models"
 	"errors"
@@ -20,6 +20,28 @@ func init() {
 		DisableKeepAlives: true,
 		MaxIdleConns:      -1,
 	}
+	dcA := models.Wise{
+		Token:           "Basic cm9vdDptaXRyb290",
+		MacAddress:      "00D0C9E34A12",
+		IdleTime:        300,
+		PutTimeInterval: 1800,
+		IP:              "192.168.10.119",
+	}
+	dcB := models.Wise{
+		Token:           "Basic cm9vdDptaXRyb290",
+		MacAddress:      "00D0C9E50453",
+		IdleTime:        300,
+		PutTimeInterval: 1800,
+		IP:              "192.168.10.192",
+	}
+	dcC := models.Wise{
+		Token:           "Basic cm9vdDptaXRyb290",
+		MacAddress:      "00D0C9E349F4",
+		IdleTime:        300,
+		PutTimeInterval: 1800,
+		IP:              "192.168.10.145",
+	}
+	Dcs = append(Dcs, dcA, dcB, dcC)
 }
 
 // FetchLoop FetchLoop
@@ -55,7 +77,9 @@ func FetchDc(wise models.Wise) (err error) {
 	if err != nil {
 		panic(err)
 	} else if dcSetting.UID != 1 || dcSetting.MAC != 0 || dcSetting.TmF != 0 || dcSetting.Fltr != 1 {
-		putDc(wise)
+		if err := putDc(wise); err != nil {
+			panic(err)
+		}
 		return
 	}
 	fetchTime, err := getFetchTime(wise, dcSetting.TFst)
@@ -68,7 +92,6 @@ func FetchDc(wise models.Wise) (err error) {
 	if tst, tend, err := checkGetDcLog(wise); err != nil {
 		panic(err)
 	} else if tst != fetchTime.TSt || tend != fetchTime.TEnd {
-		beego.Informational(tst, fetchTime.TSt, tend, fetchTime.TEnd)
 		panic(errors.New("Fetch time is not match"))
 	}
 	dis, err := getDcData(wise)
