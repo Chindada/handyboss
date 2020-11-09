@@ -19,9 +19,9 @@ type LoginReturn struct {
 
 // User User
 type User struct {
+	ID          int64        `json:"id"`
 	Data        []RealStatus `json:"data"`
 	Response    string       `json:"response"`
-	ID          int64        `json:"id"`
 	Account     string       `json:"account"`
 	Password    string       `json:"password"`
 	Name        string       `json:"name"`
