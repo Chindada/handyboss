@@ -15,6 +15,7 @@ func init() {
 	realStatusMap = make(map[string]int64)
 	scheduledMap = make(map[string]bool)
 	PlanCycleTimeMap = make(map[string]int64)
+	statusContinueTime = make(map[string]int64)
 	firstDayTimeStamp, err = beego.AppConfig.Int64("fakedata::firstDayTimeStamp")
 	if err != nil {
 		panic(err)
@@ -32,6 +33,7 @@ func init() {
 
 // PlanCycleTimeMap PlanCycleTimeMap
 var PlanCycleTimeMap map[string]int64
+var statusContinueTime map[string]int64
 
 // Machine All machine
 var Machine []models.Machine
@@ -86,6 +88,7 @@ var fakeScheduleMap sync.Map
 var schedules []models.NewSchedule
 var realSchedules []models.NewSchedule
 var fakeSchedule []models.NewSchedule
+var machineRealSchedules sync.Map
 
 var moldLastUsedTime sync.Map
 var machineLastUsedTime sync.Map

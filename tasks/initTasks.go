@@ -16,20 +16,17 @@ func init() {
 		panic(err)
 	}
 
-	// changeStable := toolbox.NewTask("changeStable", "0 0 0/2 * * *", changeStable)
-	// toolbox.AddTask("changeStable", changeStable)
+	changeStable := toolbox.NewTask("changeStable", "0 0/5 * * * *", changeStable)
+	toolbox.AddTask("changeStable", changeStable)
 
-	printMemUsage := toolbox.NewTask("printMemUsage", "0 0/1 * * * *", printMemUsage)
+	printMemUsage := toolbox.NewTask("printMemUsage", "0 0/3 * * * *", printMemUsage)
 	toolbox.AddTask("printMemUsage", printMemUsage)
 
-	// changeCycle := toolbox.NewTask("changeCycle", "0/15 * * * * *", changeCycle)
-	// toolbox.AddTask("changeCycle", changeCycle)
-
-	addNewSchedule := toolbox.NewTask("addNewSchedule", "0/10 * * * * *", addNewSchedule)
+	addNewSchedule := toolbox.NewTask("addNewSchedule", "0 0/1 * * * *", addNewSchedule)
 	toolbox.AddTask("addNewSchedule", addNewSchedule)
 
-	// randomAbnormal := toolbox.NewTask("randomAbnormal", "0 0/10 * * * *", randomAbnormal)
-	// toolbox.AddTask("randomAbnormal", randomAbnormal)
+	randomAbnormal := toolbox.NewTask("randomAbnormal", "0 0/15 * * * *", randomAbnormal)
+	toolbox.AddTask("randomAbnormal", randomAbnormal)
 
 	reNewToken := toolbox.NewTask("reNewToken", "0 0/10 * * * *", reNewToken)
 	toolbox.AddTask("reNewToken", reNewToken)

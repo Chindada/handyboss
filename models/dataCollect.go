@@ -82,20 +82,20 @@ func (c *WiseData) ConvertToDi() (di []Di, err error) {
 
 // Di Di
 type Di struct {
-	ID         int64     `json:"id" orm:"column(id)"`
-	MacAddress string    `json:"macAddress"`
-	Di0        int64     `json:"di0"`
-	Di1        int64     `json:"di1"`
-	Di2        int64     `json:"di2"`
-	Di3        int64     `json:"di3"`
-	Di4        int64     `json:"di4"`
-	Di5        int64     `json:"di5"`
-	Di6        int64     `json:"di6"`
-	Di7        int64     `json:"di7"`
-	Analyzed   int64     `json:"analyzed"`
-	Timestamp  int64     `json:"timestamp"`
-	SysTk      int64     `json:"sysTk"`
-	CreateTime time.Time `json:"createTime" orm:"auto_now;type(datetime)"`
+	ID         int64  `json:"id" orm:"column(id)"`
+	MacAddress string `json:"macAddress"`
+	Di0        int64  `json:"di0"`
+	Di1        int64  `json:"di1"`
+	Di2        int64  `json:"di2"`
+	Di3        int64  `json:"di3"`
+	Di4        int64  `json:"di4"`
+	Di5        int64  `json:"di5"`
+	Di6        int64  `json:"di6"`
+	Di7        int64  `json:"di7"`
+	Analyzed   int64  `json:"analyzed"`
+	Timestamp  int64  `json:"timestamp"`
+	SysTk      int64  `json:"sysTk"`
+	// CreateTime time.Time `json:"createTime" orm:"auto_now;type(datetime)"`
 }
 
 // DcStatus DcStatus

@@ -26,9 +26,11 @@ type StatusReturn struct {
 
 // DataRealStatus DataRealStatus
 type DataRealStatus struct {
+	MachineID     int64  `json:"machineId"`
 	MachineNumber string `json:"machineNumber"`
-	Scheduled     bool   `json:"scheduled"`
-	Tasked        bool   `json:"tasked"`
 	Status        int64  `json:"status"`
 	PlanCycleTime int64  `json:"planCycleTime"`
+	Scheduled     bool   `json:"scheduled"`
+	Tasked        bool   `json:"tasked"`
+	ContinuedTime int64  `json:"continuedTime"`
 }

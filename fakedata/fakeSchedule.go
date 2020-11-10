@@ -33,6 +33,16 @@ func GetSchedule() (schedule []models.NewSchedule, err error) {
 	if err := json.Unmarshal(body, &schedule); err != nil {
 		return schedule, err
 	}
+	var temp []models.NewSchedule
+	for _, machineID := range systemMachineID {
+		for _, s := range schedule {
+			if s.MachineID == machineID {
+				temp = append(temp, s)
+			}
+		}
+		machineRealSchedules.Store(machineID, temp)
+		temp = nil
+	}
 	realSchedules = schedule
 	return schedule, err
 }

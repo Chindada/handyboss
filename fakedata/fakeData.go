@@ -28,11 +28,12 @@ func Loop() {
 		for _, k := range Machine {
 			// checkIdle(k, false)
 			if savedclock, ok := savedcFetchLockMap.LoadOrStore(k.MacAddress, false); ok {
-				if !savedclock.(bool) {
-					go func(k models.Machine) {
-						saveDc(k)
-					}(k)
+				if savedclock.(bool) {
+					continue
 				}
+				go func(k models.Machine) {
+					saveDc(k)
+				}(k)
 			}
 		}
 	}
@@ -149,7 +150,6 @@ func GetMachine(workShopNumber string) (err error) {
 	if err := json.Unmarshal(body, &data); err != nil {
 		panic(err)
 	}
-	// beego.Informational("System machine lenth", len(systemMachineDetail))
 	var tempMachine []models.Machine
 	for _, v := range data.Info {
 		tempMachine = append(tempMachine, v)
@@ -238,26 +238,36 @@ func saveDc(param models.Machine) (err error) {
 			return
 		}
 	}
+	var check bool
 	if start, end, err := getFetchTime(param.MachineNumber); err != nil {
 		panic(err)
 	} else {
-		// beego.Informational(start, end)
 		fake := generateArr(start, end, param.MacAddress)
-		var api restapitools.PostArg
-		api.IP = ip
-		api.URL = dataDcData
-		api.Body = fake
+		for _, v := range fake {
+			if v.Di7 == 1 || v.Di3 == 1 {
+				check = true
+				break
+			}
+		}
 		headers := make(map[string]string)
 		headers["machineNumber"] = param.MachineNumber
 		headers["lastTime"] = strconv.FormatInt(end, 10)
 		headers["idleTime"] = strconv.FormatInt(param.IdleTime, 10)
-		api.Headers = headers
+		api := restapitools.PostArg{
+			IP:      ip,
+			URL:     dataDcData,
+			Body:    fake,
+			Headers: headers,
+		}
 		resp, err := api.Post()
 		if err != nil {
 			panic(err)
 		} else if resp != nil {
 			defer resp.Body.Close()
 		}
+	}
+	if check {
+		checkIdle(param, true)
 	}
 	return err
 }
@@ -272,45 +282,66 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 	if len(realSchedules) == 0 {
 		return nil
 	}
-	for _, v := range realSchedules {
-		if v.MachineID == machineFakeData.MachineID {
-			if startTime*1000 < v.StartTime && endTime*1000 > v.StartTime {
-				cycleTime = v.MoldCycleTime
-				startTime = v.StartTime / 1000
+	if sc, ok := machineRealSchedules.Load(machineFakeData.MachineID); ok {
+		for _, s := range sc.([]models.NewSchedule) {
+			if startTime*1000 < s.StartTime && endTime*1000 > s.StartTime {
+				cycleTime = s.MoldCycleTime
+				startTime = s.StartTime / 1000
 				break
-			} else if startTime*1000 > v.StartTime && endTime*1000 < v.EndTime {
-				cycleTime = v.MoldCycleTime
+			} else if startTime*1000 > s.StartTime && endTime*1000 < s.EndTime {
+				cycleTime = s.MoldCycleTime
 				break
-			} else if startTime*1000 < v.EndTime && endTime*1000 > v.EndTime {
-				cycleTime = v.MoldCycleTime
-				endTime = v.EndTime / 1000
+			} else if startTime*1000 < s.EndTime && endTime*1000 > s.EndTime {
+				cycleTime = s.MoldCycleTime
+				endTime = s.EndTime / 1000
 				break
 			}
 		}
-	}
-	if cycleTime == 0 {
+	} else {
 		return nil
+	}
+
+	if cycleTime == 0 {
+		var tmpArr []models.Di
+		var idleOrShutDown int64
+		if machineFakeData.Idle {
+			idleOrShutDown = 1
+		}
+		temp := models.Di{
+			Timestamp: startTime * 1000,
+			Di0:       idleOrShutDown,
+			Di7:       idleOrShutDown,
+		}
+		tmpArr = append(tmpArr, temp)
+		// beego.Informational(machineFakeData.MachineNumber, "No Sc")
+		return tmpArr
 	}
 	var shots, start int64
 	action := machineFakeData.Status
+	if action == 3 {
+		if statusContinueTime[machineFakeData.MachineNumber]/1000 > 300 && realStatusMap[machineFakeData.MachineNumber] == 4 {
+			action = 2
+		}
+	}
 	if machineFakeData.ActionTime == 0 {
 		machineFakeData.ActionTime = startTime
 	}
-	if endTime-startTime > cycleTime {
-		shots = (endTime - machineFakeData.ActionTime) / cycleTime
-		start = machineFakeData.ActionTime * 1000
-	}
-	beego.Informational(machineFakeData.MachineNumber, start, shots)
+	shots = (endTime - machineFakeData.ActionTime) / cycleTime
+	start = machineFakeData.ActionTime * 1000
+	// beego.Informational(machineFakeData.MachineNumber, start, shots)
 	var i int64
 	for i = 0; i <= shots; i++ {
 		diTime := start
 		probability := rand.Intn(100) + 1
-		if probability <= 5 {
-			diTime -= (cycleTime*1000/2/5 + int64(rand.Intn(9))*100)
-		} else if probability <= 10 {
+		if machineFakeData.Stable {
+			probability = 1
+		}
+		if probability <= 90 {
+			diTime += int64(rand.Intn(9)) * 100
+		} else if probability <= 95 {
 			diTime += (cycleTime*1000/2/5 + int64(rand.Intn(9))*100)
 		} else {
-			diTime += int64(rand.Intn(9)) * 100
+			diTime -= (cycleTime*1000/2/5 + int64(rand.Intn(9))*100)
 		}
 		if action == 2 {
 			temp := models.Di{
@@ -333,12 +364,20 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 		}
 		start += (cycleTime * 1000) / 2
 	}
+	if shots == 0 && action == 3 {
+		fake = nil
+		temp := models.Di{
+			Timestamp: start,
+			Di0:       1,
+			Di3:       1,
+		}
+		fake = append(fake, temp)
+	}
 	sqlite3db.Model(&machineFakeData).Update("action_time", start/1000)
 	sqlite3db.Model(&machineFakeData).Update("status", action)
 	sqlite3db.Model(&machineFakeData).Update("cycle_time", cycleTime)
 	fakeDataMode := beego.AppConfig.String("fakedata::fakeDataMode")
 	if fakeDataMode == "init" {
-
 		temp1 := models.Di{
 			Timestamp: (firstDayTimeStamp - 20) * 1000,
 			Di0:       1,
@@ -367,21 +406,13 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 }
 
 func getFetchTime(machineNumber string) (startTime, endTime int64, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
-	var api restapitools.GetArg
-	api.IP = ip
-	api.URL = dataFetchInterval
 	headers := make(map[string]string)
 	headers["machineNumber"] = machineNumber
-	api.Headers = headers
+	api := restapitools.GetArg{
+		IP:      ip,
+		URL:     dataFetchInterval,
+		Headers: headers,
+	}
 	resp, err := api.Get()
 	if err != nil {
 		panic(err)
@@ -463,8 +494,9 @@ func getRealStatus() (err error) {
 	}
 	for _, v := range data {
 		realStatusMap[v.MachineNumber] = v.Status
-		scheduledMap[v.MachineNumber] = v.Scheduled
-		PlanCycleTimeMap[v.MachineNumber] = v.PlanCycleTime
+		// scheduledMap[v.MachineNumber] = v.Scheduled
+		// PlanCycleTimeMap[v.MachineNumber] = v.PlanCycleTime
+		statusContinueTime[v.MachineNumber] = v.ContinuedTime
 	}
 	return err
 }

@@ -13,7 +13,7 @@ import (
 func main() {
 	fakedata.NewMachineLoop()
 	fakedata.NewMold()
-	// go fakedata.Loop()
+	go fakedata.Loop()
 	// go datacollect.FetchLoop(datacollect.Dcs)
 	beego.Run()
 }
