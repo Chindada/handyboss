@@ -33,7 +33,6 @@ func LoginSystem() (err error) {
 		defer resp.Body.Close()
 		cookies := resp.Cookies()
 		for _, k := range cookies {
-			// beego.Informational(k.Value)
 			jwt = k
 		}
 	}

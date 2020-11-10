@@ -40,21 +40,14 @@ func NewMachineLoop() (err error) {
 			NewMachine(v)
 		}
 	}
-	BindMachine()
+	if err := BindMachine(); err != nil {
+		panic(err)
+	}
 	return err
 }
 
 // NewDc NewDc
 func NewDc(id int64) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	babbler := babble.NewBabbler()
 	babbler.Count = 1
 	dcs := models.Dc{
@@ -77,7 +70,7 @@ func NewDc(id int64) (err error) {
 	api.Headers = headers
 	resp, err := api.Post()
 	if err != nil {
-		panic(err)
+		return err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -86,19 +79,12 @@ func NewDc(id int64) (err error) {
 
 // BindMachine BindMachine
 func BindMachine() (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
-	GetSystemMachine()
+	err = GetSystemMachine()
 	for _, v := range systemMachineDetail {
 		if v.DcID == 0 {
-			NewDc(v.ID)
+			if err := NewDc(v.ID); err != nil {
+				return err
+			}
 		}
 	}
 	return err
@@ -106,19 +92,10 @@ func BindMachine() (err error) {
 
 // NewMachine NewMachine
 func NewMachine(ws models.WorkShop) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	babbler := babble.NewBabbler()
 	babbler.Count = 1
 	if err := GetSystemMachine(); err != nil {
-		panic(err)
+		return err
 	}
 	var machineNum int
 	availableName := make(map[string]bool)
@@ -130,7 +107,7 @@ func NewMachine(ws models.WorkShop) (err error) {
 	}
 	var machineNumSetting int
 	if machineNumSetting, err = beego.AppConfig.Int("fakedata::machineNum"); err != nil {
-		panic(err)
+		return err
 	} else if machineNum < machineNumSetting {
 		for i := 0; i < machineNumSetting-machineNum; i++ {
 			number := ws.Name + strconv.Itoa(rand.Intn(20)+1)
@@ -156,7 +133,7 @@ func NewMachine(ws models.WorkShop) (err error) {
 			api.URL = systemMachine
 			resp, err := api.Post()
 			if err != nil {
-				panic(err)
+				return err
 			} else if resp != nil {
 				defer resp.Body.Close()
 			}
@@ -168,87 +145,68 @@ func NewMachine(ws models.WorkShop) (err error) {
 
 // GetSystemWorkShop GetSystemWorkShop
 func GetSystemWorkShop() (workshop []models.WorkShop, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	var api restapitools.GetArg
 	api.IP = systemIP
 	api.URL = systemNewWorkShop
 	api.Token = jwt
 	resp, err := api.Get()
 	if err != nil {
-		panic(err)
+		return workshop, err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return workshop, err
 	}
 	if err := json.Unmarshal(body, &workshop); err != nil {
-		panic(err)
+		return workshop, err
 	}
 	return workshop, err
 }
 
 // NewWorkShop NewWorkShop
 func NewWorkShop() (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	var wsNumSetting int
 	if wsNumSetting, err = beego.AppConfig.Int("fakedata::wsNum"); err != nil {
-		panic(err)
+		return err
 	}
 	var ws []models.WorkShop
 	availableNumber := make(map[string]bool)
 	if ws, err = GetSystemWorkShop(); err != nil {
-		panic(err)
-	} else {
-		for _, v := range ws {
-			availableNumber[v.Number] = true
-		}
-		if len(ws) < wsNumSetting {
-			for i := 0; i < wsNumSetting-len(ws); i++ {
-				number := strconv.Itoa(rand.Intn(10) + 1)
-				if availableNumber[number] {
-					i--
-					continue
-				}
-				babbler := babble.NewBabbler()
-				babbler.Count = 1
-				wsName := strings.Title(strings.ToLower(babbler.Babble()))
-				insert := models.WorkShop{
-					ID:     0,
-					Name:   wsName,
-					Number: number,
-					Type:   1,
-				}
-				var api restapitools.PostArg
-				api.Body = insert
-				api.IP = systemIP
-				api.Token = jwt
-				api.URL = systemNewWorkShop
-				resp, err := api.Post()
-				if err != nil {
-					panic(err)
-				} else if resp != nil {
-					defer resp.Body.Close()
-				}
-				availableNumber[number] = true
+		return err
+	}
+	for _, v := range ws {
+		availableNumber[v.Number] = true
+	}
+	if len(ws) < wsNumSetting {
+		for i := 0; i < wsNumSetting-len(ws); i++ {
+			number := strconv.Itoa(rand.Intn(10) + 1)
+			if availableNumber[number] {
+				i--
+				continue
 			}
+			babbler := babble.NewBabbler()
+			babbler.Count = 1
+			wsName := strings.Title(strings.ToLower(babbler.Babble()))
+			insert := models.WorkShop{
+				ID:     0,
+				Name:   wsName,
+				Number: number,
+				Type:   1,
+			}
+			var api restapitools.PostArg
+			api.Body = insert
+			api.IP = systemIP
+			api.Token = jwt
+			api.URL = systemNewWorkShop
+			resp, err := api.Post()
+			if err != nil {
+				return err
+			} else if resp != nil {
+				defer resp.Body.Close()
+			}
+			availableNumber[number] = true
 		}
 	}
 	return err

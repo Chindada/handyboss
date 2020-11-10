@@ -18,6 +18,12 @@ type RealStatus struct {
 	ContinuedTime int64   `json:"continuedTime"`
 }
 
+// StatusReturn StatusReturn
+type StatusReturn struct {
+	Data     []DataRealStatus `json:"data"`
+	Response string           `json:"response"`
+}
+
 // DataRealStatus DataRealStatus
 type DataRealStatus struct {
 	MachineNumber string `json:"machineNumber"`
@@ -25,10 +31,4 @@ type DataRealStatus struct {
 	Tasked        bool   `json:"tasked"`
 	Status        int64  `json:"status"`
 	PlanCycleTime int64  `json:"planCycleTime"`
-}
-
-// StatusReturn StatusReturn
-type StatusReturn struct {
-	Data     []DataRealStatus `json:"data"`
-	Response string           `json:"response"`
 }

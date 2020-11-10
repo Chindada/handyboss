@@ -53,7 +53,7 @@ func NewMold() (err error) {
 			DownTime:     60,
 			Name:         strings.Title(strings.ToLower(babbler.Babble())),
 			ProductModel: strings.Title(strings.ToLower(babbler.Babble())),
-			Number:       strings.Title(strings.ToLower(babbler.Babble())) + "#" + strconv.Itoa(10000+i),
+			Number:       "#" + strconv.Itoa(10000+i),
 			GreenRange:   0.1,
 			YellowRange:  0.2,
 		}
@@ -91,7 +91,9 @@ func NewMold() (err error) {
 		defer resp.Body.Close()
 	}
 	mold = nil
-	CreateMoldMachineRel()
+	if err := CreateMoldMachineRel(); err != nil {
+		panic(err)
+	}
 	return err
 }
 
@@ -106,8 +108,12 @@ func CreateMoldMachineRel() (err error) {
 			beego.Error(err)
 		}
 	}()
-	GetSystemMachine()
-	GetSystemMold()
+	if err := GetSystemMachine(); err != nil {
+		panic(err)
+	}
+	if err := GetSystemMold(); err != nil {
+		panic(err)
+	}
 	var moldMachineRel []models.MoldMachineRel
 	for _, i := range systemMachineID {
 		for _, j := range systemMoldID {
@@ -116,7 +122,7 @@ func CreateMoldMachineRel() (err error) {
 				MoldID:    j,
 			}
 			moldMachineRel = append(moldMachineRel, temp)
-			if len(moldMachineRel)%1000 == 0 {
+			if len(moldMachineRel)%500 == 0 {
 				var api restapitools.PutArg
 				api.IP = systemIP
 				api.URL = systemMoldMachineRel
@@ -131,50 +137,41 @@ func CreateMoldMachineRel() (err error) {
 				moldMachineRel = nil
 			}
 		}
+		var api restapitools.PutArg
+		api.IP = systemIP
+		api.URL = systemMoldMachineRel
+		api.Token = jwt
+		api.Body = moldMachineRel
+		resp, err := api.Put()
+		if err != nil {
+			panic(err)
+		} else if resp != nil {
+			defer resp.Body.Close()
+		}
+		moldMachineRel = nil
 	}
-	var api restapitools.PutArg
-	api.IP = systemIP
-	api.URL = systemMoldMachineRel
-	api.Token = jwt
-	api.Body = moldMachineRel
-	resp, err := api.Put()
-	if err != nil {
-		panic(err)
-	} else if resp != nil {
-		defer resp.Body.Close()
-	}
-	moldMachineRel = nil
 	return err
 }
 
 // GetSystemMachine GetSystemMachine
 func GetSystemMachine() (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	var api restapitools.GetArg
 	api.IP = systemIP
 	api.URL = systemMachine
 	api.Token = jwt
 	resp, err := api.Get()
 	if err != nil {
-		panic(err)
+		return err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	var machine []models.SystemMachine
 	if err := json.Unmarshal(body, &machine); err != nil {
-		panic(err)
+		return err
 	}
 	systemMachineDetail = machine
 	systemMachineID = nil
@@ -186,32 +183,23 @@ func GetSystemMachine() (err error) {
 
 // GetSystemMold GetSystemMold
 func GetSystemMold() (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	var api restapitools.GetArg
 	api.IP = systemIP
 	api.URL = systemMold
 	api.Token = jwt
 	resp, err := api.Get()
 	if err != nil {
-		panic(err)
+		return err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if err := json.Unmarshal(body, &allMolds); err != nil {
-		panic(err)
+		return err
 	}
 	for _, v := range allMolds {
 		systemMoldID = append(systemMoldID, v.ID)

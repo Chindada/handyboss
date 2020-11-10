@@ -16,31 +16,22 @@ import (
 
 // GetSchedule GetSchedule
 func GetSchedule() (schedule []models.NewSchedule, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	var api restapitools.GetArg
 	api.IP = systemIP
 	api.URL = systemScheduleURL
 	api.Token = jwt
 	resp, err := api.Get()
 	if err != nil {
-		panic(err)
+		return schedule, err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return schedule, err
 	}
 	if err := json.Unmarshal(body, &schedule); err != nil {
-		panic(err)
+		return schedule, err
 	}
 	realSchedules = schedule
 	return schedule, err
@@ -48,15 +39,6 @@ func GetSchedule() (schedule []models.NewSchedule, err error) {
 
 // GetScheduleFilter GetScheduleFilter
 func GetScheduleFilter(timeRange string) (schedule []models.NewSchedule, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
 	var api restapitools.GetArg
 	api.IP = systemIP
 	api.URL = systemScheduleURL
@@ -66,22 +48,31 @@ func GetScheduleFilter(timeRange string) (schedule []models.NewSchedule, err err
 	api.Headers = headers
 	resp, err := api.Get()
 	if err != nil {
-		panic(err)
+		return schedule, err
 	} else if resp != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return schedule, err
 	}
 	if err := json.Unmarshal(body, &schedule); err != nil {
-		panic(err)
+		return schedule, err
 	}
 	return schedule, err
 }
 
 // CreateMultiScheduleFromSlice CreateMultiScheduleFromSlice
-func CreateMultiScheduleFromSlice() {
+func CreateMultiScheduleFromSlice() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			err = r.(error)
+			beego.Error(err)
+		}
+	}()
 	defer func() {
 		AddScheduleLock.Store("active", false)
 		beego.Informational("End fake sc.")
@@ -90,9 +81,6 @@ func CreateMultiScheduleFromSlice() {
 	beego.Informational("There are", len(key), "sc")
 	total := len(key)
 	for _, v := range key {
-		// if sc, ok := tempSchedule.LoadAndDelete(v); ok {
-		// 	fakeSchedules = append(fakeSchedules, sc.(models.NewSchedule))
-		// }
 		fakeSchedules = append(fakeSchedules, v)
 		if len(fakeSchedules)%50 == 0 {
 			total -= 50
@@ -127,6 +115,7 @@ func CreateMultiScheduleFromSlice() {
 		fakeSchedules = nil
 	}
 	key = nil
+	return err
 }
 
 // FakeNewSchedule FakeNewSchedule
@@ -140,14 +129,17 @@ func FakeNewSchedule() (err error) {
 			beego.Error(err)
 		}
 	}()
-	GetSystemMold()
-	GetSystemMachine()
+	if err := GetSystemMold(); err != nil {
+		panic(err)
+	}
+	if err := GetSystemMachine(); err != nil {
+		panic(err)
+	}
 	if len(allMolds) == 0 || len(systemMachineID) == 0 {
 		return
 	}
 	AddScheduleLock.Store("active", true)
 	beego.Informational("Start fake sc.")
-
 	num, err := beego.AppConfig.Int("fakedata::autoCreateScheduleNum")
 	if err != nil {
 		panic(err)
@@ -158,7 +150,9 @@ func FakeNewSchedule() (err error) {
 		randomMold := allMolds[randomIndex]
 		scheduleMolds = append(scheduleMolds, randomMold)
 	}
-	GetSchedule()
+	if _, err := GetSchedule(); err != nil {
+		panic(err)
+	}
 	for _, k := range scheduleMolds {
 		for _, v := range realSchedules {
 			temp := tempTime{
@@ -173,9 +167,15 @@ func FakeNewSchedule() (err error) {
 					}
 				}
 			}
-			if machineLast, ok := machineLastUsedTime.LoadOrStore(v.MachineID, v.EndTime); ok {
-				if v.EndTime > machineLast.(int64) {
-					machineLastUsedTime.Store(v.MachineID, v.EndTime)
+		}
+	}
+	for _, machineID := range systemMachineID {
+		for _, v := range realSchedules {
+			if machineID == v.MachineID {
+				if machineLast, ok := machineLastUsedTime.LoadOrStore(v.MachineID, v.EndTime); ok {
+					if v.EndTime > machineLast.(int64) {
+						machineLastUsedTime.Store(v.MachineID, v.EndTime)
+					}
 				}
 			}
 		}
@@ -201,11 +201,8 @@ func FakeNewSchedule() (err error) {
 		}
 	}
 	moldWithTimeChan := make(chan moldTime, len(scheduleMolds))
-	wg := sync.WaitGroup{}
-	wg.Add(len(scheduleMolds))
-	for _, v := range scheduleMolds {
-		go func(moldWithTimeChan chan moldTime, v models.Mold, wg *sync.WaitGroup) {
-			defer wg.Done()
+	go func() {
+		for _, v := range scheduleMolds {
 			temp := moldTime{
 				moldID:       v.ID,
 				totalTime:    rand.Float64() + float64(rand.Intn(5)+6),
@@ -213,28 +210,17 @@ func FakeNewSchedule() (err error) {
 				cavityNumber: v.CavityNumber,
 			}
 			moldWithTimeChan <- temp
-		}(moldWithTimeChan, v, &wg)
-	}
-	go func() {
-		wg.Wait()
+		}
 		close(moldWithTimeChan)
 	}()
 
 	var scTime sync.Map
 	for mold := range moldWithTimeChan {
 		moldEndTimeChan := make(chan tempTime, len(systemMachineID))
-		wg2 := sync.WaitGroup{}
-		wg2.Add(len(systemMachineID))
 		for _, v := range systemMachineID {
-			go func(moldEndTimeChan chan tempTime, v int64, wg2 *sync.WaitGroup) {
-				defer wg2.Done()
-				generateEndTime(v, mold, moldEndTimeChan)
-			}(moldEndTimeChan, v, &wg2)
+			generateEndTime(v, mold, moldEndTimeChan)
 		}
-		go func() {
-			wg2.Wait()
-			close(moldEndTimeChan)
-		}()
+		close(moldEndTimeChan)
 		for k := range moldEndTimeChan {
 			if fast, ok := scTime.LoadOrStore(mold, k); ok {
 				if fast.(tempTime).endTime > k.endTime {
@@ -246,6 +232,8 @@ func FakeNewSchedule() (err error) {
 		var scStatus int64
 		if fastest, ok := scTime.Load(mold); ok {
 			temp = fastest.(tempTime)
+		} else {
+			continue
 		}
 		start := temp.startTime
 		end := temp.endTime
@@ -256,10 +244,10 @@ func FakeNewSchedule() (err error) {
 			scStatus = 2
 		}
 		if start == 0 {
-			return
+			continue
 		}
 		if end > now+86400*3*1000 {
-			return
+			continue
 		}
 		schedule := models.NewSchedule{
 			ScheduleSerial:  "FC#" + strconv.Itoa(rand.Intn(10000)),
@@ -285,7 +273,7 @@ func FakeNewSchedule() (err error) {
 			}
 		} else {
 			probabilityB := rand.Intn(100) + 1
-			if probabilityB <= 30 {
+			if probabilityB <= 40 {
 				key = append(key, schedule)
 			}
 		}
@@ -293,16 +281,7 @@ func FakeNewSchedule() (err error) {
 	return err
 }
 
-func generateEndTime(machineID int64, x moldTime, moldEndTimeChan chan tempTime) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
-				panic(r)
-			}
-			err = r.(error)
-			beego.Error(err)
-		}
-	}()
+func generateEndTime(machineID int64, x moldTime, moldEndTimeChan chan tempTime) {
 	var start, end int64
 	if machineLast, ok := machineLastUsedTime.Load(machineID); ok {
 		start = machineLast.(int64) + 3600*1000*(rand.Int63n(5)+1)
@@ -325,5 +304,4 @@ func generateEndTime(machineID int64, x moldTime, moldEndTimeChan chan tempTime)
 		endTime:   end,
 	}
 	moldEndTimeChan <- temp
-	return err
 }

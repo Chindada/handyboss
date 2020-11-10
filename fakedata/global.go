@@ -2,11 +2,33 @@ package fakedata
 
 import (
 	"emuMolding/models"
+	"emuMolding/sysinit"
 	"net/http"
 	"sync"
 
+	"github.com/astaxie/beego"
 	"github.com/jinzhu/gorm"
 )
+
+func init() {
+	var err error
+	realStatusMap = make(map[string]int64)
+	scheduledMap = make(map[string]bool)
+	PlanCycleTimeMap = make(map[string]int64)
+	firstDayTimeStamp, err = beego.AppConfig.Int64("fakedata::firstDayTimeStamp")
+	if err != nil {
+		panic(err)
+	}
+	sqlite3db, err = sysinit.CreateMachineListConnection()
+	if err != nil {
+		panic(err)
+	}
+	CalibrateMachine()
+	_, err = GetSchedule()
+	if err != nil {
+		panic(err)
+	}
+}
 
 // PlanCycleTimeMap PlanCycleTimeMap
 var PlanCycleTimeMap map[string]int64

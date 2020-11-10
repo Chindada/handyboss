@@ -18,6 +18,12 @@ type LocalMachineList struct {
 	Idle            bool   `gorm:"column:idle;default:1;" json:"idle"`
 }
 
+// MachineData MachineData
+type MachineData struct {
+	Info     []Machine `json:"info"`
+	Response string    `json:"response"`
+}
+
 // Machine Machine
 type Machine struct {
 	MachineNumber   string `json:"machineNumber"`
@@ -25,12 +31,6 @@ type Machine struct {
 	PutTimeInterval int64  `json:"putTimeInterval"`
 	IdleTime        int64  `json:"idleTime"`
 	DcAuthorization string `json:"dcAuthorization"`
-}
-
-// MachineData MachineData
-type MachineData struct {
-	Info     []Machine `json:"info"`
-	Response string    `json:"response"`
 }
 
 // FetchTime FetchTime

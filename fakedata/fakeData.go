@@ -15,25 +15,6 @@ import (
 	"github.com/astaxie/beego"
 )
 
-func init() {
-
-	var err error
-	realStatusMap = make(map[string]int64)
-	scheduledMap = make(map[string]bool)
-	PlanCycleTimeMap = make(map[string]int64)
-	firstDayTimeStamp, err = beego.AppConfig.Int64("fakedata::firstDayTimeStamp")
-	if err != nil {
-		panic(err)
-	}
-
-	sqlite3db, err = sysinit.CreateMachineListConnection()
-	if err != nil {
-		panic(err)
-	}
-	CalibrateMachine()
-	GetSchedule()
-}
-
 // Loop Loop
 func Loop() {
 	ticker := time.NewTicker(5 * time.Second)
