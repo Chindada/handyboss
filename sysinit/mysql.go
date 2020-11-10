@@ -24,7 +24,7 @@ func init() {
 	orm.RegisterModel(new(models.DcStatus))
 	orm.RegisterModel(new(models.Wise))
 
-	err = orm.RunSyncdb(name, false, true)
+	err := orm.RunSyncdb(name, false, true)
 	if err != nil {
 		panic(err)
 	}
