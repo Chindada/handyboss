@@ -1,8 +1,8 @@
 package fakedata
 
 import (
-	"emuMolding/models"
-	"emuMolding/sysinit"
+	"handyboss/models"
+	"handyboss/sysinit"
 	"net/http"
 	"sync"
 

@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"emuMolding/sysinit"
+	"handyboss/sysinit"
 
 	"github.com/astaxie/beego/toolbox"
 	"github.com/jinzhu/gorm"

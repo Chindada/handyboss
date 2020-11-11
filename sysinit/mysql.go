@@ -1,7 +1,7 @@
 package sysinit
 
 import (
-	"emuMolding/models"
+	"handyboss/models"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"

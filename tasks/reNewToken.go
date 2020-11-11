@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"emuMolding/fakedata"
+	"handyboss/fakedata"
 )
 
 func reNewToken() (err error) {

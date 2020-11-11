@@ -1,7 +1,7 @@
 package datacollect
 
 import (
-	"emuMolding/models"
+	"handyboss/models"
 	"net/http"
 	"sync"
 )

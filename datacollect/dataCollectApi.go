@@ -1,9 +1,9 @@
 package datacollect
 
 import (
-	"emuMolding/libs/restapitools"
-	"emuMolding/models"
 	"encoding/json"
+	"handyboss/libs/restapitools"
+	"handyboss/models"
 	"io/ioutil"
 )
 

@@ -1,7 +1,7 @@
 package fakedata
 
 import (
-	"emuMolding/libs/restapitools"
+	"handyboss/libs/restapitools"
 	"runtime"
 
 	"github.com/astaxie/beego"

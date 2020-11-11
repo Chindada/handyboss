@@ -1,8 +1,8 @@
 package tasks
 
 import (
-	"emuMolding/fakedata"
-	"emuMolding/models"
+	"handyboss/fakedata"
+	"handyboss/models"
 	"math/rand"
 	"runtime"
 

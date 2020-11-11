@@ -1,11 +1,11 @@
 package main
 
 import (
-	"emuMolding/fakedata"
-	_ "emuMolding/libs/restapitools"
-	_ "emuMolding/routers"
-	_ "emuMolding/sysinit"
-	_ "emuMolding/tasks"
+	"handyboss/fakedata"
+	_ "handyboss/libs/restapitools"
+	_ "handyboss/routers"
+	_ "handyboss/sysinit"
+	_ "handyboss/tasks"
 
 	"github.com/astaxie/beego"
 )

@@ -1,7 +1,7 @@
 package didao
 
 import (
-	"emuMolding/models"
+	"handyboss/models"
 
 	"github.com/astaxie/beego/orm"
 )

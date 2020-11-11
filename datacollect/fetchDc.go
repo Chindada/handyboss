@@ -1,11 +1,11 @@
 package datacollect
 
 import (
-	"emuMolding/daos/dcstatusdao"
-	"emuMolding/daos/didao"
-	"emuMolding/models"
 	"errors"
 	"fmt"
+	"handyboss/daos/dcstatusdao"
+	"handyboss/daos/didao"
+	"handyboss/models"
 	"math/rand"
 	"runtime"
 	"time"

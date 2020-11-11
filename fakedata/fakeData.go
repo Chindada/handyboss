@@ -1,11 +1,11 @@
 package fakedata
 
 import (
-	"emuMolding/libs/restapitools"
-	"emuMolding/models"
-	"emuMolding/sysinit"
 	"encoding/json"
 	"errors"
+	"handyboss/libs/restapitools"
+	"handyboss/models"
+	"handyboss/sysinit"
 	"io/ioutil"
 	"math/rand"
 	"runtime"

@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"emuMolding/fakedata"
+	"handyboss/fakedata"
 	"runtime"
 
 	"github.com/astaxie/beego"

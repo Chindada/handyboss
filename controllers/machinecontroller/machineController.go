@@ -1,10 +1,10 @@
 package machinecontroller
 
 import (
-	"emuMolding/controllers"
-	"emuMolding/fakedata"
-	"emuMolding/models"
 	"encoding/json"
+	"handyboss/controllers"
+	"handyboss/fakedata"
+	"handyboss/models"
 	"net/http"
 
 	"github.com/astaxie/beego"
