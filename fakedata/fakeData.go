@@ -243,12 +243,16 @@ func saveDc(param models.Machine) (err error) {
 		panic(err)
 	} else {
 		fake := generateArr(start, end, param.MacAddress)
+		if fake == nil {
+			return err
+		}
 		for _, v := range fake {
 			if v.Di7 == 1 || v.Di3 == 1 {
 				check = true
 				break
 			}
 		}
+		end = fake[len(fake)-1].Timestamp / 1000
 		headers := make(map[string]string)
 		headers["machineNumber"] = param.MachineNumber
 		headers["lastTime"] = strconv.FormatInt(end, 10)
@@ -273,6 +277,7 @@ func saveDc(param models.Machine) (err error) {
 }
 
 func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di) {
+	fakeDataMode := beego.AppConfig.String("fakedata::fakeDataMode")
 	var machineFakeData models.LocalMachineList
 	var cycleTime int64
 	sqlite3db.Where("`mac_address` = ?", macAddress).Last(&machineFakeData)
@@ -282,26 +287,25 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 	if len(realSchedules) == 0 {
 		return nil
 	}
+	// beego.Informational(startTime, endTime)
 	if sc, ok := machineRealSchedules.Load(machineFakeData.MachineID); ok {
 		for _, s := range sc.([]models.NewSchedule) {
-			if startTime*1000 < s.StartTime && endTime*1000 > s.StartTime {
+			if startTime*1000 < s.EndTime && endTime*1000 > s.StartTime {
 				cycleTime = s.MoldCycleTime
-				startTime = s.StartTime / 1000
-				break
-			} else if startTime*1000 > s.StartTime && endTime*1000 < s.EndTime {
-				cycleTime = s.MoldCycleTime
-				break
-			} else if startTime*1000 < s.EndTime && endTime*1000 > s.EndTime {
-				cycleTime = s.MoldCycleTime
-				endTime = s.EndTime / 1000
+				if s.StartTime > startTime {
+					startTime = s.StartTime / 1000
+				}
+				if s.EndTime < endTime {
+					endTime = s.EndTime / 1000
+				}
 				break
 			}
 		}
 	} else {
 		return nil
 	}
-
-	if cycleTime == 0 {
+	beego.Informational(cycleTime)
+	if cycleTime == 0 && fakeDataMode != "init" {
 		var tmpArr []models.Di
 		var idleOrShutDown int64
 		if machineFakeData.Idle {
@@ -326,7 +330,9 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 	if machineFakeData.ActionTime == 0 {
 		machineFakeData.ActionTime = startTime
 	}
-	shots = (endTime - machineFakeData.ActionTime) / cycleTime
+	if cycleTime != 0 {
+		shots = (endTime - machineFakeData.ActionTime) / cycleTime
+	}
 	start = machineFakeData.ActionTime * 1000
 	// beego.Informational(machineFakeData.MachineNumber, start, shots)
 	var i int64
@@ -376,7 +382,7 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 	sqlite3db.Model(&machineFakeData).Update("action_time", start/1000)
 	sqlite3db.Model(&machineFakeData).Update("status", action)
 	sqlite3db.Model(&machineFakeData).Update("cycle_time", cycleTime)
-	fakeDataMode := beego.AppConfig.String("fakedata::fakeDataMode")
+
 	if fakeDataMode == "init" {
 		temp1 := models.Di{
 			Timestamp: (firstDayTimeStamp - 20) * 1000,
