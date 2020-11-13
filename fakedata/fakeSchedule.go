@@ -7,12 +7,19 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"runtime"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/astaxie/beego"
 )
+
+type sortedSc []models.NewSchedule
+
+// func(p sortedSc) sortSc(i, j int) bool{
+// 	return
+// }
 
 // GetSchedule GetSchedule
 func GetSchedule() (schedule []models.NewSchedule, err error) {
@@ -33,15 +40,15 @@ func GetSchedule() (schedule []models.NewSchedule, err error) {
 	if err := json.Unmarshal(body, &schedule); err != nil {
 		return schedule, err
 	}
-	var temp []models.NewSchedule
 	for _, machineID := range systemMachineID {
+		var temp sortedSc
 		for _, s := range schedule {
 			if s.MachineID == machineID {
 				temp = append(temp, s)
 			}
 		}
+		sort.Slice(temp, func(i, j int) bool { return temp[i].StartTime < temp[j].StartTime })
 		machineRealSchedules.Store(machineID, temp)
-		temp = nil
 	}
 	realSchedules = schedule
 	return schedule, err

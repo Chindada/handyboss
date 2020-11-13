@@ -22,7 +22,7 @@ func init() {
 	printMemUsage := toolbox.NewTask("printMemUsage", "0 0/3 * * * *", printMemUsage)
 	toolbox.AddTask("printMemUsage", printMemUsage)
 
-	addNewSchedule := toolbox.NewTask("addNewSchedule", "0 0/1 * * * *", addNewSchedule)
+	addNewSchedule := toolbox.NewTask("addNewSchedule", "0/10 * * * * *", addNewSchedule)
 	toolbox.AddTask("addNewSchedule", addNewSchedule)
 
 	randomAbnormal := toolbox.NewTask("randomAbnormal", "0 0/15 * * * *", randomAbnormal)

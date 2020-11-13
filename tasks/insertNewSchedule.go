@@ -17,17 +17,23 @@ func addNewSchedule() (err error) {
 			beego.Error(err)
 		}
 	}()
-	if lock, ok := fakedata.AddScheduleLock.LoadOrStore("active", false); ok {
-		if lock.(bool) {
-			beego.Informational("Last Insert Not yet")
-			return
-		}
-		if err := fakedata.FakeNewSchedule(); err != nil {
-			panic(err)
-		} else {
-			err = fakedata.CreateMultiScheduleFromSlice()
-			if err != nil {
+	autoCreateSchedule, err := beego.AppConfig.Bool("fakedata::autoCreateSchedule")
+	if err != nil {
+		panic(err)
+	}
+	if autoCreateSchedule {
+		if lock, ok := fakedata.AddScheduleLock.LoadOrStore("active", false); ok {
+			if lock.(bool) {
+				beego.Informational("Last Insert Not yet")
+				return
+			}
+			if err := fakedata.FakeNewSchedule(); err != nil {
 				panic(err)
+			} else {
+				err = fakedata.CreateMultiScheduleFromSlice()
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}

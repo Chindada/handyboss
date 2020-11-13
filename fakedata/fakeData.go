@@ -243,16 +243,17 @@ func saveDc(param models.Machine) (err error) {
 		panic(err)
 	} else {
 		fake := generateArr(start, end, param.MacAddress)
-		if fake == nil {
+		if len(fake) == 0 {
 			return err
 		}
+		end = fake[len(fake)-1].Timestamp / 1000
+		now := time.Now().Unix()
 		for _, v := range fake {
-			if v.Di7 == 1 || v.Di3 == 1 {
+			if v.Di7 == 1 || v.Di3 == 1 && now-end > 300 {
 				check = true
 				break
 			}
 		}
-		end = fake[len(fake)-1].Timestamp / 1000
 		headers := make(map[string]string)
 		headers["machineNumber"] = param.MachineNumber
 		headers["lastTime"] = strconv.FormatInt(end, 10)
@@ -270,6 +271,7 @@ func saveDc(param models.Machine) (err error) {
 			defer resp.Body.Close()
 		}
 	}
+
 	if check {
 		checkIdle(param, true)
 	}
@@ -289,7 +291,7 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 	}
 	// beego.Informational(startTime, endTime)
 	if sc, ok := machineRealSchedules.Load(machineFakeData.MachineID); ok {
-		for _, s := range sc.([]models.NewSchedule) {
+		for _, s := range sc.(sortedSc) {
 			if startTime*1000 < s.EndTime && endTime*1000 > s.StartTime {
 				cycleTime = s.MoldCycleTime
 				if s.StartTime > startTime {
@@ -305,7 +307,8 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 		return nil
 	}
 	beego.Informational(cycleTime)
-	if cycleTime == 0 && fakeDataMode != "init" {
+	now := time.Now().Unix()
+	if cycleTime == 0 && fakeDataMode != "init" && now-endTime < 300 {
 		var tmpArr []models.Di
 		var idleOrShutDown int64
 		if machineFakeData.Idle {
@@ -317,7 +320,6 @@ func generateArr(startTime, endTime int64, macAddress string) (fake []models.Di)
 			Di7:       idleOrShutDown,
 		}
 		tmpArr = append(tmpArr, temp)
-		// beego.Informational(machineFakeData.MachineNumber, "No Sc")
 		return tmpArr
 	}
 	var shots, start int64
