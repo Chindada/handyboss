@@ -6,7 +6,7 @@ ENV GO111MODULE=on
 ENV TZ=Asia/Taipei
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /go/src/app
-RUN git clone http://timhsu:${symbol}Minnotec2025@172.20.10.50/timhsu/handyboss.git
+RUN git clone http://timhsu:${symbol}A2rgilaal@172.20.10.50/timhsu/handyboss.git
 WORKDIR handyboss
 RUN go build -o handyboss
 ENTRYPOINT ./handyboss
