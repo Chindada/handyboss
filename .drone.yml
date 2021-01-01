@@ -6,3 +6,8 @@ steps:
   image: golang
   commands:
   - go build
+- name: docker  
+  image: plugins/docker
+  settings:
+    repo: 172.20.10.70:5000/handyboss
+    tags: latest
