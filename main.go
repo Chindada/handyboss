@@ -15,6 +15,5 @@ func main() {
 	fakedata.NewMold()
 	go fakedata.Loop()
 	// go datacollect.FetchLoop(datacollect.Dcs)
-	// test two remote twice
 	beego.Run()
 }
