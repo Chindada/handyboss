@@ -16,21 +16,21 @@ func init() {
 		MacAddress:      "00D0C9E34A12",
 		IdleTime:        300,
 		PutTimeInterval: 1800,
-		IP:              "192.168.10.119",
+		IP:              "172.20.10.119",
 	}
 	dcB := models.Wise{
 		Token:           "Basic cm9vdDptaXRyb290",
 		MacAddress:      "00D0C9E50453",
 		IdleTime:        300,
 		PutTimeInterval: 1800,
-		IP:              "192.168.10.192",
+		IP:              "172.20.10.192",
 	}
 	dcC := models.Wise{
 		Token:           "Basic cm9vdDptaXRyb290",
 		MacAddress:      "00D0C9E349F4",
 		IdleTime:        300,
 		PutTimeInterval: 1800,
-		IP:              "192.168.10.145",
+		IP:              "172.20.10.145",
 	}
 	Dcs = append(Dcs, dcA, dcB, dcC)
 }
