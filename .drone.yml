@@ -10,6 +10,7 @@ steps:
   image: plugins/docker
   settings:
     registry: 172.20.10.70:5000
+    insecure: true
     repo: 172.20.10.70:5000/handyboss
     tags: latest
   
