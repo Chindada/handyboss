@@ -8,8 +8,8 @@ steps:
   - go build
 - name: docker  
   image: plugins/docker
-  commands: ["--insecure-registry","172.20.10.70:5000"]
   settings:
+    registry: 172.20.10.70:5000
     repo: 172.20.10.70:5000/handyboss
     tags: latest
   
