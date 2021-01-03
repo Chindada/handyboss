@@ -11,3 +11,4 @@ steps:
   settings:
     repo: 172.20.10.70:5000/handyboss
     tags: latest
+    
